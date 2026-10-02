@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utah Family Expense Quiz</title>
+<style>
+  :root {
+    --navy: #0b1f4d;
+    --navy-dark: #061334;
+    --gold: #f4c542;
+    --gold-dark: #c99a12;
+    --red: #d62828;
+    --green: #1d9e75;
+    --amber: #e0932c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle at top, #16255c 0%, var(--navy-dark) 70%);
+    color: #fff;
+    padding: 24px 12px 48px;
+  }
+  .quiz-app {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .title-banner {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .title-banner h1 {
+    font-size: clamp(24px, 4.5vw, 36px);
+    margin: 0;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--navy-dark);
+    font-weight: 900;
+  }
+  .title-banner p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #cdd6f0;
+    text-transform: uppercase;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #cdd6f0;
+  }
+  .score-pill {
+    background: var(--navy);
+    border: 2px solid var(--gold-dark);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: #17255c;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s;
+  }
+  .quiz-card {
+    background: linear-gradient(180deg, #1a3487, #102160);
+    border: 3px solid var(--gold-dark);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .difficulty-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .difficulty-easy { background: #163f2e; color: #6bdba0; border: 1px solid #2f9e6b; }
+  .difficulty-medium { background: #4a3512; color: #f4c66b; border: 1px solid var(--amber); }
+  .difficulty-hard { background: #4a1414; color: #f79c9c; border: 1px solid var(--red); }
+  .question-text {
+    font-size: clamp(16px, 2.6vw, 20px);
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+  .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .answer-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    background: linear-gradient(180deg, #14297a, #0c1c5c);
+    border: 2px solid var(--gold-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s, border-color 0.2s;
+  }
+  .answer-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    transform: translateX(2px);
+  }
+  .answer-btn:active:not(:disabled) { transform: scale(0.99); }
+  .answer-btn:disabled { cursor: default; }
+  .answer-letter {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--navy-dark);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .answer-btn.correct {
+    background: linear-gradient(180deg, #1d9e75, #146b50);
+    border-color: #6bdba0;
+  }
+  .answer-btn.correct .answer-letter { background: #fff; color: #146b50; }
+  .answer-btn.incorrect {
+    background: linear-gradient(180deg, var(--red), #8f1c1c);
+    border-color: #f79c9c;
+  }
+  .answer-btn.incorrect .answer-letter { background: #fff; color: #8f1c1c; }
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(29,158,117,0.18); border: 1px solid #2f9e6b; color: #d6f5e8; }
+  .feedback.incorrect-fb { background: rgba(214,40,40,0.18); border: 1px solid var(--red); color: #ffd9d9; }
+  .feedback strong { color: var(--gold); }
+  .next-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+  .btn-next {
+    background: var(--gold);
+    color: var(--navy-dark);
+    border: none;
+    font-weight: 900;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: none;
+  }
+  .btn-next.show { display: inline-block; }
+  .results {
+    text-align: center;
+    display: none;
+  }
+  .results.show { display: block; }
+  .results h2 {
+    font-size: 30px;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .results .subtext {
+    color: #cdd6f0;
+    margin-bottom: 20px;
+  }
+  .pass-fail-banner {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .pass-fail-banner.pass {
+    background: rgba(29,158,117,0.2);
+    border: 2px solid var(--green);
+    color: #6bdba0;
+  }
+  .pass-fail-banner.fail {
+    background: rgba(214,40,40,0.2);
+    border: 2px solid var(--red);
+    color: #f79c9c;
+  }
+  .passing-note {
+    text-align: center;
+    font-size: 12px;
+    color: #9fb0e0;
+    margin: -4px 0 14px;
+  }
+  .breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .breakdown-card {
+    background: var(--navy);
+    border: 2px solid var(--gold-dark);
+    border-radius: 10px;
+    padding: 12px 18px;
+    min-width: 100px;
+  }
+  .breakdown-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9fb0e0;
+    margin-bottom: 4px;
+  }
+  .breakdown-card .value {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--gold);
+  }
+  .btn-restart {
+    background: transparent;
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .footer-note {
+    text-align: center;
+    color: #7686b8;
+    font-size: 12px;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+<!-- MLC results capture -->
+<div id="mlcGate" style="position:fixed;inset:0;z-index:99999;background:rgba(10,16,28,.82);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
+  <form id="mlcGateForm" style="background:#fff;color:#1b1f27;width:100%;max-width:420px;padding:28px 26px;border-top:4px solid #1b1f27;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:left;">
+    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:8px;">Utah Family Expense Quiz</div>
+    <div style="font-size:22px;font-weight:700;line-height:1.2;margin-bottom:6px;">Before you begin</div>
+    <div style="font-size:14px;line-height:1.5;opacity:.75;margin-bottom:18px;">Enter your full name. Your results are recorded when you finish.</div>
+    <label for="mlcName" style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Full name</label>
+    <input id="mlcName" autocomplete="name" required style="width:100%;box-sizing:border-box;font-size:16px;padding:12px;border:2px solid #1b1f27;margin-bottom:16px;outline:none;">
+    <button type="submit" style="width:100%;min-height:48px;font-size:15px;font-weight:700;background:#1b1f27;color:#fff;border:0;cursor:pointer;text-align:left;padding:0 16px;">Continue &rarr;</button>
+  </form>
+</div>
+<div id="mlcSaved" style="display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99998;background:#1b1f27;color:#fff;font:600 13px system-ui,Arial,sans-serif;padding:10px 16px;"></div>
+<script>
+(function(){
+  var SHEET_URL = "https://script.google.com/macros/s/AKfycbwq10Rl16OwAAkfNLgHQcJK-uSB4uTkWBisG615MJ_WEqUNtLe3db-HZf1NPNpAHRRtFw/exec";
+  var QUIZ = "Utah Family Expense Quiz";
+  var t0 = Date.now(), name = "";
+  try { name = sessionStorage.getItem("mlc-candidate-name") || ""; } catch(e){}
+  var gate = document.getElementById("mlcGate");
+  if (name) gate.style.display = "none";
+  document.getElementById("mlcGateForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var v = document.getElementById("mlcName").value.trim();
+    if (v.split(/\s+/).length < 2) { alert("Please enter your first and last name."); return; }
+    name = v; try { sessionStorage.setItem("mlc-candidate-name", v); } catch(e){}
+    gate.style.display = "none"; t0 = Date.now();
+  });
+  function toast(msg){ var el = document.getElementById("mlcSaved"); el.textContent = msg; el.style.display = "block"; setTimeout(function(){ el.style.display = "none"; }, 4000); }
+  window.MLC_REPORT = function(r){
+    var secs = Math.round((Date.now() - t0) / 1000);
+    var lines = [QUIZ, "Candidate: " + (name || "Unnamed"), "Score: " + r.score + "/" + r.total + " (" + r.pct + "%) — " + (r.passed ? "PASS" : "FAIL") + " (80% required)", ""];
+    if (r.breakdown) { lines.push("BREAKDOWN"); Object.keys(r.breakdown).forEach(function(k){ var b = r.breakdown[k]; lines.push("  " + k + ": " + b.correct + "/" + b.total); }); lines.push(""); }
+    lines.push("MISSED (" + r.missed.length + ")");
+    r.missed.forEach(function(m, i){ lines.push((i+1) + ". " + m.q); lines.push("   Picked: " + m.picked); lines.push("   Correct: " + m.correct); });
+    var row = {
+      submitted: new Date().toISOString(), candidate: name || "Unnamed", position: QUIZ,
+      reference: "Q-" + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*1000),
+      version: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+      verdict: r.passed ? "PASS" : "FAIL", composite: r.score + "/" + r.total + " (" + r.pct + "%)",
+      numerical: "", reading: "", typingWpm: "", typingAccuracy: "",
+      timeUsed: Math.floor(secs/60) + "m " + (secs%60) + "s", answered: r.total + "/" + r.total,
+      device: navigator.userAgent, report: lines.join("\n")
+    };
+    var body = JSON.stringify(row);
+    (function attempt(n){
+      fetch(SHEET_URL, { method:"POST", mode:"no-cors", keepalive:true, headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: body })
+        .then(function(){ toast("Results recorded."); })
+        .catch(function(err){ console.warn("MLC results send failed (attempt " + n + ")", err); if (n < 4) setTimeout(function(){ attempt(n+1); }, n*3000); else toast("Could not record results — please tell your supervisor."); });
+    })(1);
+  };
+})();
+</script>
+<!-- /MLC results capture -->
+
+<div class="quiz-app">
+
+  <div class="title-banner">
+    <h1>Utah family expense quiz</h1>
+    <p>20 questions &middot; training module check</p>
+  </div>
+
+  <div class="top-row">
+    <span id="questionCounter">Question 1 of 20</span>
+    <span class="score-pill" id="scorePill">Score: 0 / 20</span>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="passing-note">Passing score: 16 / 20 (80%)</div>
+
+  <div class="quiz-card" id="quizCard">
+    <div id="quizBody">
+      <div class="difficulty-badge" id="difficultyBadge">Easy</div>
+      <div class="question-text" id="questionText"></div>
+      <div class="answers" id="answersContainer"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="next-row">
+        <button class="btn-next" id="btnNext">Next question &rarr;</button>
+      </div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="pass-fail-banner" id="passFailBanner"></div>
+      <h2 id="resultScore"></h2>
+      <div class="subtext" id="resultMessage"></div>
+      <div class="breakdown" id="breakdown"></div>
+      <button class="btn-restart" id="btnRestart">Retake quiz</button>
+    </div>
+  </div>
+
+  <div class="footer-note">Click an answer to see if you're right. Your score updates as you go.</div>
+</div>
+
+<script>
+const questions = [
+  {
+    difficulty: "easy",
+    question: "What does \"MLC\" stand for in this training?",
+    options: ["Mutual Legal Consortium", "Marital Loan Center", "Mountain Land Collections", "Mediation and Litigation Council"],
+    correct: 2,
+    explanation: "MLC stands for Mountain Land Collections, the company shown throughout the account software screenshots."
+  },
+  {
+    difficulty: "easy",
+    question: "What does \"DOM\" stand for?",
+    options: ["Date of Marriage", "Division of Marriage", "Debtor Order Management", "Date of Mailing"],
+    correct: 0,
+    explanation: "DOM stands for Date of Marriage, a key piece of information logged on the Reference Screen."
+  },
+  {
+    difficulty: "medium",
+    question: "Under Utah Code Section 30-2-9, who can be held responsible for family expenses?",
+    options: ["Only the spouse who signed the agreement", "Only the higher-earning spouse", "Only the spouse whose name is on the account", "Both spouses, jointly or separately"],
+    correct: 3,
+    explanation: "Subsection 1 states family expenses are chargeable upon the property of both spouses, jointly or separately."
+  },
+  {
+    difficulty: "easy",
+    question: "Which screen is used to add or update a spouse's information on an account?",
+    options: ["Reference Screen", "Qk Ed", "Links screen", "Notes Form"],
+    correct: 1,
+    explanation: "Qk Ed (Quick Edit) is the screen used to enter or update spouse information."
+  },
+  {
+    difficulty: "easy",
+    question: "Where should you log the Date of Marriage or the date of separation/divorce?",
+    options: ["The Reference Screen", "The Notes Form", "The Links screen", "The Payment screen"],
+    correct: 0,
+    explanation: "The Reference Screen is where key dates like DOM or date of separation/divorce are recorded."
+  },
+  {
+    difficulty: "medium",
+    question: "According to MLC's interpretation, whose responsibility are debts incurred during the marriage?",
+    options: ["Only the spouse who signed for the debt", "Neither party until a court rules", "Both parties, regardless of who signed", "Only the spouse with the higher balance"],
+    correct: 2,
+    explanation: "MLC interprets the law to mean both parties are responsible while they are still married, regardless of the signer."
+  },
+  {
+    difficulty: "easy",
+    question: "What should you do if no spouse is listed on an account?",
+    options: ["Close the account", "Automatically deny the debt", "Wait for the consumer to call back", "Do a full Square 4 and ask for spouse information"],
+    correct: 3,
+    explanation: "If no spouse is listed, do a full Square 4 and ask for any available spouse information."
+  },
+  {
+    difficulty: "easy",
+    question: "What is Utah Code Section 30-2-9 primarily about?",
+    options: ["Child custody arrangements", "Family expenses and who is responsible for them", "Wage garnishment limits", "Statute of limitations on debt"],
+    correct: 1,
+    explanation: "Utah Code 30-2-9, the Utah Family Expense statute, defines who is responsible for family expenses."
+  },
+  {
+    difficulty: "medium",
+    question: "Once you learn a consumer is divorced or separated, what is the first and most important piece of information to obtain?",
+    options: ["The date of separation or divorce", "Their new address", "Their new employer", "Their attorney's contact information"],
+    correct: 0,
+    explanation: "MLC's interpretation stresses obtaining the date of separation or divorce as soon as you learn of it."
+  },
+  {
+    difficulty: "medium",
+    question: "What status should an account be changed to when it is being combined with another account?",
+    options: ["VALIDT", "ACTIVE", "CLOSED", "LECOMB"],
+    correct: 3,
+    explanation: "When combining accounts, the status is changed to LECOMB before saving."
+  },
+  {
+    difficulty: "medium",
+    question: "When combining two or more accounts, which account should they be combined into?",
+    options: ["The account with the highest balance", "The oldest existing account", "The most recently opened account", "Whichever account the consumer prefers"],
+    correct: 1,
+    explanation: "Accounts being combined should always be combined into the oldest existing account."
+  },
+  {
+    difficulty: "medium",
+    question: "According to the Consumer Profiles diagram, what happens when a child turns 18?",
+    options: ["They are removed from the system", "They are merged into the Mr. & Mrs. profile", "They become their own separate profile", "Nothing changes until they get married"],
+    correct: 2,
+    explanation: "The diagram shows a child becoming their own separate consumer profile upon turning 18."
+  },
+  {
+    difficulty: "easy",
+    question: "Which button do you click from the main Debtnet screen to begin linking two accounts?",
+    options: ["Links", "Notes", "Account", "Contact"],
+    correct: 0,
+    explanation: "From the main Debtnet screen, click \"Links\" to start the account linking process."
+  },
+  {
+    difficulty: "medium",
+    question: "What information must be entered in the Debtor Cross Link dialog to link an account?",
+    options: ["The consumer's Social Security number", "The consumer's date of birth", "The original creditor's name", "The debtor number and a description"],
+    correct: 3,
+    explanation: "The Debtor Cross Link dialog requires a debtor number and a description before saving."
+  },
+  {
+    difficulty: "hard",
+    question: "Per Utah Code 30-2-9, which of these does NOT create a right to attorney's or collection fees against the nonsigning spouse?",
+    options: ["A car loan", "A medical procedure", "Food or clothing purchases", "A home improvement under $1,000"],
+    correct: 2,
+    explanation: "Subsection 5 excludes food or clothing purchases, and home improvements or repairs over $5,000, from these fees."
+  },
+  {
+    difficulty: "hard",
+    question: "What is a \"linked account\" as described in this training?",
+    options: ["An account with a co-signer", "An account that may include bills incurred before marriage or after separation, shared between the same consumers", "An account flagged for fraud", "An account that has been closed"],
+    correct: 1,
+    explanation: "A linked account may include bills incurred before marriage or after separation, shared between the same consumers."
+  },
+  {
+    difficulty: "hard",
+    question: "Under Subsection 2 of Utah Code 30-2-9, what must exist for a creditor to recover an agreed-upon amount from both spouses jointly and severally?",
+    options: ["A verbal agreement between the spouses", "A court order", "Proof that both spouses benefited equally", "A written agreement signed by either spouse"],
+    correct: 3,
+    explanation: "Subsection 2 requires a written agreement signed by either spouse for a creditor to recover jointly and severally."
+  },
+  {
+    difficulty: "hard",
+    question: "Once MLC learns a couple is divorced or separated, from whom will MLC stop pursuing repayment?",
+    options: ["The non-signing spouse, once they no longer live with the debtor", "Whichever spouse has better credit", "Both spouses immediately", "The spouse who signed the original agreement"],
+    correct: 0,
+    explanation: "MLC will not pursue repayment from the non-signing spouse once they no longer reside with the debtor."
+  },
+  {
+    difficulty: "hard",
+    question: "Which principle explains why a divorce decree alone does not eliminate a spouse's responsibility for a family debt?",
+    options: ["Community property law", "Statute of limitations law", "Contract law supersedes divorce decrees", "Bankruptcy law"],
+    correct: 2,
+    explanation: "MLC's interpretation is built on the principle that contract law supersedes divorce decrees."
+  },
+  {
+    difficulty: "hard",
+    question: "Per Utah Code 30-2-9, home improvements or repairs over what dollar amount are excluded from creating a right to attorney's or collection fees against the nonsigning spouse?",
+    options: ["$1,000", "$5,000", "$2,500", "$10,000"],
+    correct: 1,
+    explanation: "Subsection 5 sets this threshold at home improvements or repairs over $5,000."
+  }
+];
+
+let state = {
+  index: 0,
+  score: 0,
+  answered: false,
+  breakdown: { easy: { correct: 0, total: 0 }, medium: { correct: 0, total: 0 }, hard: { correct: 0, total: 0 } }
+};
+
+// Fisher-Yates shuffle, returns a new array (does not mutate input)
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Builds a freshly randomized copy of the question bank: question order is
+// shuffled, and each question's own option order is shuffled too (with the
+// correct-answer index remapped to match).
+function buildSessionQuestions() {
+  const questionOrder = shuffle(questions);
+  return questionOrder.map(q => {
+    const optionOrder = shuffle(q.options.map((opt, i) => i)); // shuffled list of original indices
+    const newOptions = optionOrder.map(i => q.options[i]);
+    const newCorrect = optionOrder.indexOf(q.correct);
+    return Object.assign({}, q, { options: newOptions, correct: newCorrect });
+  });
+}
+
+let sessionQuestions = buildSessionQuestions();
+
+const questionCounter = document.getElementById('questionCounter');
+const scorePill = document.getElementById('scorePill');
+const progressFill = document.getElementById('progressFill');
+const difficultyBadge = document.getElementById('difficultyBadge');
+const questionText = document.getElementById('questionText');
+const answersContainer = document.getElementById('answersContainer');
+const feedback = document.getElementById('feedback');
+const btnNext = document.getElementById('btnNext');
+const quizBody = document.getElementById('quizBody');
+const results = document.getElementById('results');
+const letters = ['A', 'B', 'C', 'D'];
+
+function renderQuestion() {
+  const q = sessionQuestions[state.index];
+  state.answered = false;
+  questionCounter.textContent = 'Question ' + (state.index + 1) + ' of ' + sessionQuestions.length;
+  scorePill.textContent = 'Score: ' + state.score + ' / ' + sessionQuestions.length;
+  progressFill.style.width = Math.round((state.index / sessionQuestions.length) * 100) + '%';
+
+  difficultyBadge.textContent = q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1);
+  difficultyBadge.className = 'difficulty-badge difficulty-' + q.difficulty;
+
+  questionText.textContent = q.question;
+  answersContainer.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = '<span class="answer-letter">' + letters[i] + '</span><span>' + opt + '</span>';
+    btn.addEventListener('click', () => selectAnswer(i));
+    answersContainer.appendChild(btn);
+  });
+
+  feedback.className = 'feedback';
+  feedback.textContent = '';
+  btnNext.classList.remove('show');
+}
+
+function selectAnswer(i) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = sessionQuestions[state.index];
+  const buttons = answersContainer.querySelectorAll('.answer-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  state.breakdown[q.difficulty].total += 1;
+
+  q._picked = i;
+  const isCorrect = i === q.correct;
+  if (isCorrect) {
+    state.score += 1;
+    state.breakdown[q.difficulty].correct += 1;
+    buttons[i].classList.add('correct');
+    feedback.className = 'feedback show correct-fb';
+    feedback.innerHTML = '<strong>Correct.</strong> ' + q.explanation;
+  } else {
+    buttons[i].classList.add('incorrect');
+    buttons[q.correct].classList.add('correct');
+    feedback.className = 'feedback show incorrect-fb';
+    feedback.innerHTML = '<strong>Not quite.</strong> ' + q.explanation;
+  }
+
+  scorePill.textContent = 'Score: ' + state.score + ' / ' + sessionQuestions.length;
+  btnNext.classList.add('show');
+  btnNext.textContent = (state.index === sessionQuestions.length - 1) ? 'See results \u2192' : 'Next question \u2192';
+}
+
+btnNext.addEventListener('click', () => {
+  if (state.index < sessionQuestions.length - 1) {
+    state.index += 1;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+function showResults() {
+  progressFill.style.width = '100%';
+  quizBody.style.display = 'none';
+  results.classList.add('show');
+
+  const pct = Math.round((state.score / sessionQuestions.length) * 100);
+  const passingScore = Math.ceil(sessionQuestions.length * 0.8);
+  const passed = state.score >= passingScore;
+  try { window.MLC_REPORT && window.MLC_REPORT({ score: state.score, total: sessionQuestions.length, pct: pct, passed: passed, breakdown: state.breakdown,
+    missed: sessionQuestions.filter(function(q){ return q._picked !== q.correct; }).map(function(q){ return { q: q.question, picked: q._picked == null ? "(blank)" : q.options[q._picked], correct: q.options[q.correct] }; }) }); } catch(e){ console.warn(e); }
+
+
+  const banner = document.getElementById('passFailBanner');
+  banner.textContent = passed ? 'Pass' : 'Fail';
+  banner.className = 'pass-fail-banner ' + (passed ? 'pass' : 'fail');
+
+  document.getElementById('resultScore').textContent = state.score + ' / ' + sessionQuestions.length + ' (' + pct + '%)';
+
+  let message;
+  if (passed) {
+    if (pct >= 90) message = "Excellent work \u2014 you know this process cold.";
+    else message = "Nice work \u2014 you've met the 80% passing score for this module.";
+  } else {
+    const needed = passingScore - state.score;
+    message = "You need " + needed + " more correct answer" + (needed === 1 ? "" : "s") + " to reach the 80% passing score. Review the training and retake the quiz.";
+  }
+  document.getElementById('resultMessage').textContent = message;
+
+  const breakdown = document.getElementById('breakdown');
+  breakdown.innerHTML = '';
+  ['easy', 'medium', 'hard'].forEach(level => {
+    const d = state.breakdown[level];
+    const card = document.createElement('div');
+    card.className = 'breakdown-card';
+    card.innerHTML = '<div class="label">' + level + '</div><div class="value">' + d.correct + ' / ' + d.total + '</div>';
+    breakdown.appendChild(card);
+  });
+}
+
+document.getElementById('btnRestart').addEventListener('click', () => {
+  sessionQuestions = buildSessionQuestions();
+  state = {
+    index: 0,
+    score: 0,
+    answered: false,
+    breakdown: { easy: { correct: 0, total: 0 }, medium: { correct: 0, total: 0 }, hard: { correct: 0, total: 0 } }
+  };
+  quizBody.style.display = 'block';
+  results.classList.remove('show');
+  renderQuestion();
+});
+
+renderQuestion();
+</script>
+</body>
+</html>
